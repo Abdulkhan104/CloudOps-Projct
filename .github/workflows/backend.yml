@@ -18,6 +18,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: List repo files for debug
+        run: ls -R
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -27,7 +30,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: 'fs'
-          scan-ref: './backend'
+          scan-ref: './backend' # Adjust if your backend code is in a different folder
           format: 'table'
           output: 'trivyfs.txt'
 
@@ -46,15 +49,15 @@ jobs:
       - name: Build Docker Image
         run: |
           cd backend
-          docker system prune -f
-          docker container prune -f
-          docker build -t $AWS_ECR_REPO_NAME .
+          sudo docker system prune -f
+          sudo docker container prune -f
+          sudo docker build -t $AWS_ECR_REPO_NAME .
 
       - name: Push Docker Image
         run: |
           IMAGE_TAG=${{ github.run_number }}
-          docker tag $AWS_ECR_REPO_NAME $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
-          docker push $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
+          sudo docker tag $AWS_ECR_REPO_NAME $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
+          sudo docker push $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
 
       - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@0.20.0
