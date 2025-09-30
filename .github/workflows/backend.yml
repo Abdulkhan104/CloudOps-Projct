@@ -1,0 +1,64 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_DEFAULT_REGION: ap-south-1
+      AWS_ECR_REPO_NAME: backend-repo
+      REPOSITORY_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Trivy File Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: './backend'
+          format: 'table'
+          output: 'trivyfs.txt'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION \
+          | docker login --username AWS --password-stdin $REPOSITORY_URI
+
+      - name: Build Docker Image
+        run: |
+          cd backend
+          docker system prune -f
+          docker container prune -f
+          docker build -t $AWS_ECR_REPO_NAME .
+
+      - name: Push Docker Image
+        run: |
+          IMAGE_TAG=${{ github.run_number }}
+          docker tag $AWS_ECR_REPO_NAME $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
+          docker push $REPOSITORY_URI$AWS_ECR_REPO_NAME:$IMAGE_TAG
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ env.REPOSITORY_URI }}${{ env.AWS_ECR_REPO_NAME }}:${{ github.run_number }}
+          format: 'table'
+          output: 'trivyimage.txt'
