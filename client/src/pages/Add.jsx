@@ -32,7 +32,7 @@ const Add = () => {
 
   return (
     <div className="form">
-      <h1>Add New Book</h1>
+      <h1>Adding Book</h1>
       <input
         type="text"
         placeholder="Book title"
