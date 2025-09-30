@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_DEFAULT_REGION: us-east-1
-      AWS_ECR_REPO_NAME: ${{ secrets.ECR_REPO1 }}
-      REPOSITORY_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/
+      AWS_DEFAULT_REGION: ap-south-1
+      AWS_ECR_REPO_NAME: frontend-repo
+      REPOSITORY_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/
 
     steps:
       - name: Checkout Code
